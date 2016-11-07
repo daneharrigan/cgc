@@ -77,8 +77,8 @@ func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 	var per *Period
 
 	for {
-		page++
 		url := fmt.Sprintf(BungieURL, c.membershipType, c.membershipId, c.characterId, page)
+		page++
 		response, err := c.get(url)
 		if err != nil {
 			return nil, err
