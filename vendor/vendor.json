@@ -2,5 +2,9 @@
 	"comment": "",
 	"ignore": "test",
 	"package": [],
-	"rootPath": "github.com/daneharrigan/cgc"
+	"rootPath": "github.com/daneharrigan/cgc",
+    "heroku": {
+        "install": ["./..."],
+        "goVersion": "go1.7"
+    }
 }
