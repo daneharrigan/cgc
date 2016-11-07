@@ -5,28 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 )
 
 const (
-	BungieURL  = "https://www.bungie.net/Platform/Destiny/Stats/ActivityHistory/%s/%s/%s/?mode=%s&page=%d"
-	UserAgent  = "cgc/0.1 (https://github.com/daneharrigan/cgc)"
-	TimeFormat = "2006-01-02"
+	BungieURL         = "https://www.bungie.net/Platform/Destiny/Stats/ActivityHistory/%s/%s/%s/?mode=AllPvP&page=%d"
+	UserAgent         = "cgc/0.1 (https://github.com/daneharrigan/cgc)"
+	TimeFormat        = "2006-01-02"
+	TrialsOfOsiris    = 14
+	IronBanner        = 19
+	Racing            = 29
+	PrivateMatchesAll = 32
 )
-
-var Modes = strings.Join([]string{
-	"Lockdown",
-	"ThreeVsThree",
-	"Control",
-	"FreeForAll",
-	"Doubles",
-	"Elimination",
-	"Rift",
-	"AllMayhem",
-	"ZoneControl",
-	"Supremacy",
-}, ",")
 
 var (
 	ErrBungieResponse = errors.New("could not parse bungie.net API")
@@ -43,7 +33,10 @@ type ActivityHistory struct {
 	Response struct {
 		Data struct {
 			Activities []struct {
-				Period string `json:"period"`
+				Period          string `json:"period"`
+				ActivityDetails struct {
+					Mode int `json:"mode"`
+				} `json:"activityDetails"`
 			} `json:"activities"`
 		} `json:"data"`
 	} `json:"Response"`
@@ -78,7 +71,7 @@ func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 	page := 0
 	for {
 		page++
-		url := fmt.Sprintf(BungieURL, c.membershipType, c.membershipId, c.characterId, Modes, page)
+		url := fmt.Sprintf(BungieURL, c.membershipType, c.membershipId, c.characterId, page)
 		response, err := c.get(url)
 		if err != nil {
 			return nil, err
@@ -95,6 +88,15 @@ func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 
 		var counted int
 		for _, activity := range activityHistory.Response.Data.Activities {
+			switch activity.ActivityDetails.Mode {
+			case TrialsOfOsiris:
+				fallthrough
+			case IronBanner:
+				fallthrough
+			case PrivateMatchesAll:
+				continue
+			}
+
 			period, err := time.Parse(time.RFC3339, activity.Period)
 			if err != nil {
 				return nil, ErrBungieResponse
