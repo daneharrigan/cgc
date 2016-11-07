@@ -81,7 +81,7 @@ func (api *API) HandleMessage(statusCode int, message string, w http.ResponseWri
 func (api *API) HandleGames(w http.ResponseWriter, r *http.Request) {
 	fromParam := r.FormValue("from")
 
-	to := time.Now().Add(24 * time.Hour)
+	to := time.Now()
 	var from time.Time
 
 	if fromParam == "" {

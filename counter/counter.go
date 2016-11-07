@@ -86,7 +86,6 @@ func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 			return nil, ErrBungieResponse
 		}
 
-		var counted int
 		for _, activity := range activityHistory.Response.Data.Activities {
 			switch activity.ActivityDetails.Mode {
 			case TrialsOfOsiris:
@@ -102,14 +101,13 @@ func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 				return nil, ErrBungieResponse
 			}
 
+			if period.Before(from) {
+				return results, nil
+			}
+
 			key := period.Format(TimeFormat)
 			results.Breakdown[key]++
 			results.Total++
-			counted++
-		}
-
-		if counted == 0 {
-			break
 		}
 	}
 
