@@ -23,10 +23,15 @@ var (
 )
 
 type Results struct {
-	From      string         `json:"from"`
-	To        string         `json:"to"`
-	Total     int            `json:"total"`
-	Breakdown map[string]int `json:"breakdown"`
+	From    string    `json:"from"`
+	To      string    `json:"to"`
+	Total   int       `json:"total"`
+	Periods []*Period `json:"periods"`
+}
+
+type Period struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
 }
 
 type ActivityHistory struct {
@@ -62,13 +67,15 @@ func New(apiKey, membershipType, membershipId, characterId string) *Counter {
 
 func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 	results := &Results{
-		From:      from.Format(TimeFormat),
-		To:        to.Format(TimeFormat),
-		Breakdown: make(map[string]int),
-		Total:     0,
+		From:  from.Format(TimeFormat),
+		To:    to.Format(TimeFormat),
+		Total: 0,
 	}
 
 	page := 0
+	var currentKey string
+	var per *Period
+
 	for {
 		page++
 		url := fmt.Sprintf(BungieURL, c.membershipType, c.membershipId, c.characterId, page)
@@ -102,11 +109,22 @@ func (c *Counter) GetResults(from, to time.Time) (*Results, error) {
 			}
 
 			if period.Before(from) {
+				if per != nil {
+					results.Periods = append(results.Periods, per)
+				}
 				return results, nil
 			}
 
 			key := period.Format(TimeFormat)
-			results.Breakdown[key]++
+			if key != currentKey {
+				if per != nil {
+					results.Periods = append(results.Periods, per)
+				}
+				currentKey = key
+				per = &Period{Date: key}
+			}
+
+			per.Count++
 			results.Total++
 		}
 	}
